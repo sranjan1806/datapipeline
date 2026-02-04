@@ -1,19 +1,23 @@
-terraform {
-  required_version = ">= 1.5.0"
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = ">= 5.0"
-    }
-  }
-}
-
 data "aws_availability_zones" "available" {
   state = "available"
 }
 
 locals {
   azs = slice(data.aws_availability_zones.available.names, 0, var.az_count)
+}
+
+# Guardrails: ensure counts match
+resource "null_resource" "validate_subnet_counts" {
+  lifecycle {
+    precondition {
+      condition     = length(var.public_subnet_cidrs) == var.az_count
+      error_message = "public_subnet_cidrs length must match az_count"
+    }
+    precondition {
+      condition     = length(var.private_subnet_cidrs) == var.az_count
+      error_message = "private_subnet_cidrs length must match az_count"
+    }
+  }
 }
 
 resource "aws_vpc" "this" {
@@ -28,46 +32,46 @@ resource "aws_vpc" "this" {
 
 resource "aws_internet_gateway" "this" {
   vpc_id = aws_vpc.this.id
-  tags = {
-    Name = "${var.name}-igw"
-  }
+  tags = { Name = "${var.name}-igw" }
 }
 
-# Public subnets (one per AZ)
+# Public subnets
 resource "aws_subnet" "public" {
-  for_each = { for idx, az in local.azs : idx => az }
+  for_each = { for i, az in local.azs : i => az }
 
   vpc_id                  = aws_vpc.this.id
   availability_zone       = each.value
-  cidr_block              = cidrsubnet(var.cidr_block, 4, each.key) # /20 if VPC is /16
+  cidr_block              = var.public_subnet_cidrs[each.key]
   map_public_ip_on_launch = true
 
   tags = {
     Name = "${var.name}-public-${each.value}"
     Tier = "public"
   }
+
+  depends_on = [null_resource.validate_subnet_counts]
 }
 
-# Private subnets (one per AZ)
+# Private subnets
 resource "aws_subnet" "private" {
-  for_each = { for idx, az in local.azs : idx => az }
+  for_each = { for i, az in local.azs : i => az }
 
   vpc_id            = aws_vpc.this.id
   availability_zone = each.value
-  cidr_block        = cidrsubnet(var.cidr_block, 4, each.key + 10) # non-overlapping
+  cidr_block        = var.private_subnet_cidrs[each.key]
 
   tags = {
     Name = "${var.name}-private-${each.value}"
     Tier = "private"
   }
+
+  depends_on = [null_resource.validate_subnet_counts]
 }
 
 # Public route table -> IGW
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.this.id
-  tags = {
-    Name = "${var.name}-public-rt"
-  }
+  tags   = { Name = "${var.name}-public-rt" }
 }
 
 resource "aws_route" "public_internet" {
@@ -82,21 +86,16 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
-# NAT (single NAT to keep cost low)
+# NAT gateway (single NAT)
 resource "aws_eip" "nat" {
   domain = "vpc"
-  tags = {
-    Name = "${var.name}-nat-eip"
-  }
+  tags   = { Name = "${var.name}-nat-eip" }
 }
 
 resource "aws_nat_gateway" "this" {
   allocation_id = aws_eip.nat.id
   subnet_id     = values(aws_subnet.public)[0].id
-
-  tags = {
-    Name = "${var.name}-nat"
-  }
+  tags          = { Name = "${var.name}-nat" }
 
   depends_on = [aws_internet_gateway.this]
 }
@@ -104,9 +103,7 @@ resource "aws_nat_gateway" "this" {
 # Private route table -> NAT
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.this.id
-  tags = {
-    Name = "${var.name}-private-rt"
-  }
+  tags   = { Name = "${var.name}-private-rt" }
 }
 
 resource "aws_route" "private_to_nat" {

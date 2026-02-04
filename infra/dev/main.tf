@@ -21,3 +21,21 @@ module "s3" {
     Project     = var.name
   }
 }
+
+module "aurora" {
+  source = "../modules/aurora"
+
+  name               = var.name
+  vpc_id             = module.vpc.vpc_id
+  private_subnet_ids = module.vpc.private_subnet_ids
+
+  db_name         = "appdb"
+  master_username = "masteruser"
+  master_password = var.db_master_password
+
+  tags = {
+    Terraform   = "true"
+    Environment = "dev"
+    Project     = var.name
+  }
+}

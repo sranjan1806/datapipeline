@@ -18,3 +18,8 @@ variable "unique_suffix" {
   description = "Short unique suffix for S3 bucket names (e.g., shashi-01 or pr-2026)"
   default     = "shashi-01"
 }
+
+variable "db_master_password" {
+  type      = string
+  sensitive = true
+}

@@ -40,3 +40,19 @@ variable "dms_password" {
   nullable  = true
   sensitive = true
 }
+
+# MWAA variables
+variable "airflow_version" {
+  type    = string
+  default = "2.8.1"
+}
+
+variable "mwaa_environment_class" {
+  type    = string
+  default = "mw1.small"
+}
+
+variable "mwaa_webserver_access_mode" {
+  type    = string
+  default = "PUBLIC_ONLY"
+}

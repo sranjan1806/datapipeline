@@ -22,3 +22,24 @@ module "s3" {
   }
 }
 
+module "mwaa" {
+  source = "../modules/mwaa"
+
+  name               = var.name
+  unique_suffix      = var.unique_suffix
+  vpc_id             = module.vpc.vpc_id
+  private_subnet_ids = module.vpc.private_subnet_ids
+
+  raw_bucket_arn     = module.s3.raw_bucket_arn
+  curated_bucket_arn = module.s3.curated_bucket_arn
+
+  airflow_version       = var.airflow_version
+  environment_class     = var.mwaa_environment_class
+  webserver_access_mode = var.mwaa_webserver_access_mode
+
+  tags = {
+    Terraform   = "true"
+    Environment = "dev"
+    Project     = var.name
+  }
+}

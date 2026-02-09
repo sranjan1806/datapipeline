@@ -9,9 +9,10 @@ module "dms" {
   aurora_db_name  = "appdb"
 
   replication_username = var.dms_username
-  replication_password = var.dms_password
+  replication_password = coalesce(var.dms_password, var.db_master_password)
 
-  raw_bucket_name = module.s3.raw_bucket_name
+  raw_bucket_name        = module.s3.raw_bucket_name
+  start_replication_task = true
 
   tags = {
     Terraform   = "true"

@@ -1,3 +1,11 @@
+locals {
+  aurora_cluster_parameter_overrides = {
+    # Keep explicit here so environment-level tuning is easy later.
+    "rds.logical_replication" = "1"
+    max_replication_slots     = "10"
+    max_wal_senders           = "10"
+  }
+}
 
 module "aurora" {
   source = "../modules/aurora"
@@ -6,9 +14,10 @@ module "aurora" {
   vpc_id             = module.vpc.vpc_id
   private_subnet_ids = module.vpc.private_subnet_ids
 
-  db_name         = "appdb"
-  master_username = "masteruser"
-  master_password = var.db_master_password
+  db_name                     = "appdb"
+  master_username             = "masteruser"
+  master_password             = var.db_master_password
+  cluster_parameter_overrides = local.aurora_cluster_parameter_overrides
 
   tags = {
     Terraform   = "true"

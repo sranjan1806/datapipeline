@@ -23,6 +23,12 @@ variable "replication_password" {
 
 variable "raw_bucket_name" { type = string }
 
+variable "start_replication_task" {
+  type        = bool
+  description = "Whether to start the DMS replication task after creation."
+  default     = true
+}
+
 variable "tags" {
   type    = map(string)
   default = {}

@@ -111,6 +111,8 @@ resource "aws_dms_s3_endpoint" "target" {
   service_access_role_arn = aws_iam_role.dms_s3.arn
 
   tags = merge(var.tags, { Name = "${var.name}-tgt-s3" })
+
+  depends_on = [aws_iam_role_policy_attachment.dms_s3_attach]
 }
 
 
@@ -118,6 +120,7 @@ resource "aws_dms_s3_endpoint" "target" {
 resource "aws_dms_replication_task" "this" {
   replication_task_id      = "${var.name}-task-full-cdc"
   migration_type           = "full-load-and-cdc"
+  start_replication_task   = var.start_replication_task
   replication_instance_arn = aws_dms_replication_instance.this.replication_instance_arn
   source_endpoint_arn      = aws_dms_endpoint.source.endpoint_arn
   target_endpoint_arn      = aws_dms_s3_endpoint.target.endpoint_arn

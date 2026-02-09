@@ -28,6 +28,12 @@ variable "instance_class" {
   default = "db.t4g.medium" # good MVP balance
 }
 
+variable "cluster_parameter_overrides" {
+  type        = map(string)
+  description = "Optional Aurora cluster parameter overrides merged on top of defaults."
+  default     = {}
+}
+
 variable "tags" {
   type    = map(string)
   default = {}

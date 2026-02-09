@@ -23,12 +23,33 @@ resource "aws_security_group" "aurora" {
   tags = merge(var.tags, { Name = "${var.name}-aurora-sg" })
 }
 
-# Parameter group (basic; CDC-related params can be added later)
+locals {
+  # Baseline parameters needed for DMS CDC from Aurora PostgreSQL.
+  default_cluster_parameters = {
+    "rds.logical_replication" = "1"
+    max_replication_slots     = "10"
+    max_wal_senders           = "10"
+  }
+
+  effective_cluster_parameters = merge(
+    local.default_cluster_parameters,
+    var.cluster_parameter_overrides
+  )
+}
+
 resource "aws_rds_cluster_parameter_group" "this" {
   name   = "${var.name}-aurora-pg"
   family = "aurora-postgresql15"
 
-  # Keep minimal for MVP; we will add logical replication settings before CDC
+  dynamic "parameter" {
+    for_each = local.effective_cluster_parameters
+    content {
+      name         = parameter.key
+      value        = parameter.value
+      apply_method = "pending-reboot"
+    }
+  }
+
   tags = merge(var.tags, { Name = "${var.name}-aurora-pg" })
 }
 
@@ -45,8 +66,8 @@ resource "aws_rds_cluster" "this" {
   vpc_security_group_ids          = [aws_security_group.aurora.id]
   db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.this.name
 
-  storage_encrypted = true
-  skip_final_snapshot = true  # MVP speed; later set false for production-like
+  storage_encrypted   = true
+  skip_final_snapshot = true # MVP speed; later set false for production-like
 
   tags = merge(var.tags, { Name = "${var.name}-aurora" })
 }

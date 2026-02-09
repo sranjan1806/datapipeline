@@ -31,10 +31,12 @@ variable "db_master_password" {
 # DMS Variables
 variable "dms_username" {
   type    = string
-  default = "dms_user"
+  default = "masteruser"
 }
 
 variable "dms_password" {
   type      = string
+  default   = null
+  nullable  = true
   sensitive = true
 }

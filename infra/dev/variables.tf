@@ -56,3 +56,46 @@ variable "mwaa_webserver_access_mode" {
   type    = string
   default = "PUBLIC_ONLY"
 }
+
+# EC2 variables
+variable "ec2_instance_type" {
+  type    = string
+  default = "t3.medium"
+}
+
+variable "ec2_ami_id" {
+  type     = string
+  default  = null
+  nullable = true
+}
+
+variable "ec2_os_family" {
+  type    = string
+  default = "amazon-linux-2023"
+
+  validation {
+    condition     = contains(["amazon-linux-2023", "ubuntu-22.04"], var.ec2_os_family)
+    error_message = "ec2_os_family must be one of: amazon-linux-2023, ubuntu-22.04."
+  }
+}
+
+variable "ec2_key_name" {
+  type     = string
+  default  = null
+  nullable = true
+}
+
+variable "ec2_root_volume_type" {
+  type    = string
+  default = "gp3"
+}
+
+variable "ec2_root_volume_size_gb" {
+  type    = number
+  default = 25
+
+  validation {
+    condition     = var.ec2_root_volume_size_gb >= 20 && var.ec2_root_volume_size_gb <= 30
+    error_message = "ec2_root_volume_size_gb must be between 20 and 30 GiB."
+  }
+}

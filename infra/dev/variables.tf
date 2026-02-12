@@ -85,6 +85,11 @@ variable "ec2_key_name" {
   nullable = true
 }
 
+variable "ec2_ssh_ingress_cidr" {
+  type        = string
+  description = "CIDR allowed to SSH to EC2 nodes"
+}
+
 variable "ec2_root_volume_type" {
   type    = string
   default = "gp3"

@@ -11,6 +11,14 @@ resource "aws_security_group" "postgres_nodes" {
     self        = true
   }
 
+  ingress {
+    description = "Allow SSH from admin CIDR"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["104.246.25.206/32"]
+  }
+
   egress {
     description = "Allow all outbound traffic"
     from_port   = 0
@@ -34,7 +42,7 @@ module "ec2_writer" {
   hostname               = "pg-primary"
   node_role              = "Writer"
   instance_type          = var.ec2_instance_type
-  subnet_id              = module.vpc.private_subnet_ids[0]
+  subnet_id              = module.vpc.public_subnet_ids[0]
   vpc_security_group_ids = [aws_security_group.postgres_nodes.id]
   ami_id                 = var.ec2_ami_id
   os_family              = var.ec2_os_family
@@ -56,7 +64,7 @@ module "ec2_replica1" {
   hostname               = "pg-replica1"
   node_role              = "Replica1"
   instance_type          = var.ec2_instance_type
-  subnet_id              = module.vpc.private_subnet_ids[1]
+  subnet_id              = module.vpc.public_subnet_ids[1]
   vpc_security_group_ids = [aws_security_group.postgres_nodes.id]
   ami_id                 = var.ec2_ami_id
   os_family              = var.ec2_os_family
@@ -78,7 +86,7 @@ module "ec2_replica2" {
   hostname               = "pg-replica2"
   node_role              = "Replica2"
   instance_type          = var.ec2_instance_type
-  subnet_id              = module.vpc.private_subnet_ids[0]
+  subnet_id              = module.vpc.public_subnet_ids[0]
   vpc_security_group_ids = [aws_security_group.postgres_nodes.id]
   ami_id                 = var.ec2_ami_id
   os_family              = var.ec2_os_family

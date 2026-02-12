@@ -38,10 +38,22 @@ output "pg_primary_private_ip" {
   value = module.ec2_writer.private_ip
 }
 
+output "pg_primary_public_ip" {
+  value = module.ec2_writer.public_ip
+}
+
 output "pg_replica1_private_ip" {
   value = module.ec2_replica1.private_ip
 }
 
+output "pg_replica1_public_ip" {
+  value = module.ec2_replica1.public_ip
+}
+
 output "pg_replica2_private_ip" {
   value = module.ec2_replica2.private_ip
+}
+
+output "pg_replica2_public_ip" {
+  value = module.ec2_replica2.public_ip
 }
